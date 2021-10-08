@@ -1,55 +1,45 @@
-# <snippet_imports>
-import os
-from azure.core.exceptions import ResourceNotFoundError
-from azure.ai.formrecognizer import FormRecognizerClient
-from azure.ai.formrecognizer import FormTrainingClient
-from azure.core.credentials import AzureKeyCredential
-# </snippet_imports>
+import data_lake_helper
+import form_recognizer_train
+import form_recognizer_analyze
+import json
 
-# <snippet_creds>
-endpoint = "https://dp-formrecognizer-mkr-tst.cognitiveservices.azure.com/"
-key = "8ea662154e2b476bb45ee681a37bec6b"
-# </snippet_creds>
+########### Parameter setzen #############
+# DataLake
+storageAccountName = "dpstoragetstmkr"
+storageAccountKey = "9fHjRnxj7oU9/cNYN8u/zK1kCDhiI3N/SVGJM4P5vqJah9LA+D9yrSS2CNYQKIrXX4g2pH9IKESOCeYLi1hc/w=="
+serviceURI = "https://" + storageAccountName + ".dfs.core.windows.net/"
 
-# <snippet_auth>
-form_recognizer_client = FormRecognizerClient(endpoint, AzureKeyCredential(key))
-form_training_client = FormTrainingClient(endpoint, AzureKeyCredential(key))
-# </snippet_auth>
+# Source
+containerNameSource = "formrecognizer"
+directoryNameSource = "EatHappy/deliverynote"
+fileNameSource = "deliverynote_16529215.pdf"
+
+# Form Recognizer
+endpoint = r"https://dp-formrecognizer-mkr-tst.cognitiveservices.azure.com/"
+post_url = endpoint + "/formrecognizer/v2.1/custom/models"
+source = r"https://dpstoragetstmkr.blob.core.windows.net/formrecognizer?sp=rl&st=2021-10-08T11:11:32Z&se=2021-12-31T20:11:32Z&spr=https&sv=2020-08-04&sr=c&sig=3CXAiIv1bzOrX8eZYKUTyO2Im4lwTDboaM%2Ff2eNrx8M%3D"
+prefix = directoryNameSource
+includeSubFolders = False
+useLabelFile = False
+apim_key = "8ea662154e2b476bb45ee681a37bec6b"
+fyle_type = "application/pdf"
 
 
 
-invoiceUrl = "https://dpstoragetstmkr.blob.core.windows.net/98-temporary/FormRecognizer/sampleData/Invoice_1.pdf"
+########### train and get modelId #############
+train_json = form_recognizer_train.trainModel(endpoint,post_url,source,prefix,includeSubFolders,useLabelFile,apim_key)
+model_id = str(train_json['modelInfo']['modelId'])
 
-poller = form_recognizer_client.begin_recognize_invoices_from_url(invoiceUrl)
-invoices = poller.result()
 
-for idx, invoice in enumerate(invoices):
-    print("--------Recognizing invoice #{}--------".format(idx+1))
-    vendor_name = invoice.fields.get("VendorName")
-    if vendor_name:
-        print("Vendor Name: {} has confidence: {}".format(vendor_name.value, vendor_name.confidence))
-    vendor_address = invoice.fields.get("VendorAddress")
-    if vendor_address:
-        print("Vendor Address: {} has confidence: {}".format(vendor_address.value, vendor_address.confidence))
-    customer_name = invoice.fields.get("CustomerName")
-    if customer_name:
-        print("Customer Name: {} has confidence: {}".format(customer_name.value, customer_name.confidence))
-    customer_address = invoice.fields.get("CustomerAddress")
-    if customer_address:
-        print("Customer Address: {} has confidence: {}".format(customer_address.value, customer_address.confidence))
-    customer_address_recipient = invoice.fields.get("CustomerAddressRecipient")
-    if customer_address_recipient:
-        print("Customer Address Recipient: {} has confidence: {}".format(customer_address_recipient.value, customer_address_recipient.confidence))
-    invoice_id = invoice.fields.get("InvoiceId")
-    if invoice_id:
-        print("Invoice Id: {} has confidence: {}".format(invoice_id.value, invoice_id.confidence))
-    invoice_date = invoice.fields.get("InvoiceDate")
-    if invoice_date:
-        print("Invoice Date: {} has confidence: {}".format(invoice_date.value, invoice_date.confidence))
-    invoice_total = invoice.fields.get("InvoiceTotal")
-    if invoice_total:
-        print("Invoice Total: {} has confidence: {}".format(invoice_total.value, invoice_total.confidence))
-    due_date = invoice.fields.get("DueDate")
-    if due_date:
-        print("Due Date: {} has confidence: {}".format(due_date.value, due_date.confidence))
+########### analyze form #############
+# Connect to DataLake
+data_lake_helper.initialize_storage_account(storageAccountName,storageAccountKey)
 
+# download file
+data_bytes = data_lake_helper.download_file(containerNameSource,directoryNameSource,fileNameSource).readall()
+
+# analyze and store json result
+analyze_json = form_recognizer_analyze.analyzeForm(model_id,endpoint,apim_key,fyle_type,data_bytes)
+data = json.dumps(analyze_json)
+status = data_lake_helper.upload_file_sink(containerNameSource,directoryNameSource,fileNameSource+".json",data)
+print(status)

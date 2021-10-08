@@ -22,6 +22,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="azure_FormRecognizerPY.py" />
+    <Compile Include="form_recognizer_train.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="form_recognizer_analyze.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="data_lake_helper.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
