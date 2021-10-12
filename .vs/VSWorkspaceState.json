@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\CSVCleanserPY",
+    "\\CSVCleanserPython\\CSVCleanserPython"
   ],
-  "SelectedNode": "\\EatHappyEDIFactImportPY.sln",
+  "SelectedNode": "\\CSVCleanserPY\\CSVCleanserPY.sln",
   "PreviewInSolutionExplorer": false
 }

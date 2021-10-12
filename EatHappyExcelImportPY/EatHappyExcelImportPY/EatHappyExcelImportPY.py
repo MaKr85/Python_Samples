@@ -37,6 +37,24 @@ def doTransfer(file_client,file_client_sink,file_client_temporary,file_sink):
         return "failed"
 
 
+def doTransferNoRows(file_client,file_client_sink,file_client_temporary,file_sink,rows):
+    try:
+
+        if rows > 0:
+            # CSV in temporary speichern
+            file_client_temporary.upload_file(file_sink)
+
+        # Originaldatei ins Archiv verschieben und aus new löschen
+        file_client_sink.upload_file(file_sink)
+        file_client.delete_file()
+
+        return "successfull"
+
+    except Exception as e:
+        print(e)
+        return "failed"
+
+
 
 def get_SinkFileCSVBilla(df_file_source,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink):
     try:
@@ -588,13 +606,14 @@ for file in my_files:
     if directory == "Edeka_Suedbayern":
 
         df_file_source = readExcelEdekaSuedbayern(file_client)
+        rows = df_file_source.nrows
 
         # CSV erstellen
         file_sink = get_SinkFileCSV(df_file_source,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink)
         print(file_sink)
 
         # Transfer durchführen
-        transfer_result = doTransfer(file_client,file_client_sink,file_client_temporary,file_sink)
+        transfer_result = doTransferNoRows(file_client,file_client_sink,file_client_temporary,file_sink,rows)
         print(directory+": "+fileName+" "+transfer_result)
 
 
