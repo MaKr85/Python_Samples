@@ -102,7 +102,7 @@ if check_directory_exists(containerNameSource,directoryNameSource)==True:
             # wenn Metadaten für aktuelles File vorhanden, CSV Standards überschreiben
             for irows_meta in range(rows_meta):
                 currentFileNameMeta = df_meta[irows_meta,0]
-                if currentFileNameMeta == fileNameSource:
+                if currentFileNameMeta == fileNameSource or fileNameSource.startswith(currentFileNameMeta):
                     metadataFound = "true"
                     if df_meta[irows_meta,1] is not None:
                         columnDelimiter = df_meta[irows_meta,1]

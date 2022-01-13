@@ -2,8 +2,10 @@
   "ExpandedNodes": [
     "",
     "\\CSVCleanserPY",
-    "\\CSVCleanserPython\\CSVCleanserPython"
+    "\\CSVCleanserPython",
+    "\\CSVCleanserPython\\CSVCleanserPython",
+    "\\CSVCleanserPY\\CSVCleanserPY"
   ],
-  "SelectedNode": "\\CSVCleanserPY\\CSVCleanserPY.sln",
+  "SelectedNode": "\\CSVCleanserPython\\CSVCleanserPython\\CSVCleanserPython.py",
   "PreviewInSolutionExplorer": false
 }

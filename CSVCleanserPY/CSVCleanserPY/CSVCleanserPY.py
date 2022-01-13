@@ -193,9 +193,45 @@ def get_MetadataFileSQL(filelistMetaCSV,schemaName,tableName):
      print(e)
 
 
+#def get_SinkFileCSV(df_file_source,header_Sink,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink):
+#    try:
+#        rows = df_file_source.nrows
+#        columns = df_file_source.ncols
+
+#        # filelist[] erzeugen und header hinzufügen
+#        filelist = []
+#        filelist.append(header_Sink)
+
+#        # über alle Zeilen iterieren und Daten filelist[] hinzufügen 
+
+#        for irows in range(rows):
+#            rowlist=[]
+#            for icolumns in range(columns):
+#                if df_file_source[irows,icolumns] is not None:
+#                    if str(df_file_source[irows,icolumns]).find(columnDelimiterSink) > 0:
+#                        if str(df_file_source[irows,icolumns]).startswith(quoteDelimiterSink) is True: 
+#                            rowlist.append(str(df_file_source[irows,icolumns]).replace("\n"," ").replace("\r"," "))                     
+#                        else:
+#                            rowlist.append(quoteDelimiterSink+str(df_file_source[irows,icolumns]).replace(quoteDelimiterSink,escapeDelimiterSink.rstrip()+quoteDelimiterSink).replace("\n"," ").replace("\r"," ")+quoteDelimiterSink)
+#                    #elif str(df_file_source[irows,icolumns]).find(quoteDelimiterSink) > -1:
+#                        #rowlist.append(quoteDelimiterSink+str(df_file_source[irows,icolumns]).replace(quoteDelimiterSink,escapeDelimiterSink.rstrip()+quoteDelimiterSink)+quoteDelimiterSink)
+#                    else:
+#                        rowlist.append(str(df_file_source[irows,icolumns]).replace("\n"," ").replace("\r"," "))
+#                else:
+#                    rowlist.append('')
+#                row_sink = columnDelimiterSink.join(rowlist)
+#            filelist.append(row_sink)
+
+#        rowDelimiterSink="\r\n"
+#        file_sink = rowDelimiterSink.join(filelist)
+
+#        return file_sink
+
+#    except Exception as e:
+#     print(e)
+
 def get_SinkFileCSV(df_file_source,header_Sink,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink):
     try:
-
         rows = df_file_source.nrows
         columns = df_file_source.ncols
 
@@ -209,15 +245,23 @@ def get_SinkFileCSV(df_file_source,header_Sink,columnDelimiterSink,quoteDelimite
             rowlist=[]
             for icolumns in range(columns):
                 if df_file_source[irows,icolumns] is not None:
-                    if str(df_file_source[irows,icolumns]).find(columnDelimiterSink) > 0:
-                        if str(df_file_source[irows,icolumns]).startswith(quoteDelimiterSink) is True: 
-                            rowlist.append(str(df_file_source[irows,icolumns]))
-                        else:
-                            rowlist.append(quoteDelimiterSink+str(df_file_source[irows,icolumns]).replace(quoteDelimiterSink,escapeDelimiterSink.rstrip()+quoteDelimiterSink)+quoteDelimiterSink)
-                    elif str(df_file_source[irows,icolumns]).find(quoteDelimiterSink) > -1:
-                        rowlist.append(quoteDelimiterSink+str(df_file_source[irows,icolumns]).replace(quoteDelimiterSink,escapeDelimiterSink.rstrip()+quoteDelimiterSink)+quoteDelimiterSink)
+                    #print(str(df_file_source[irows,icolumns]))
+                    #print(str(df_file_source[irows,icolumns]).find(columnDelimiterSink))
+                    if str(df_file_source[irows,icolumns]).find(columnDelimiterSink) > -1:
+                        ################################################################################################################################
+                        # 09.12.2021: Matthias Kramer ##################################################################################################
+                        # alle CSV Steuercharaktere entfernen, da diese durch den Exasol-Import ignoriert werden bzw. nicht mitgegeben werden können!! #
+                        ################################################################################################################################
+                        rowlist.append(str(df_file_source[irows,icolumns]).replace("\n"," ").replace("\r"," ").replace(quoteDelimiterSink,"").replace(escapeDelimiterSink,"").replace(columnDelimiterSink," "))
+                        #if str(df_file_source[irows,icolumns]).startswith(quoteDelimiterSink) is True: 
+                            #rowlist.append(str(df_file_source[irows,icolumns]).replace("\n"," ").replace("\r"," "))                     
+                        #else: 
+                            #rowlist.append(quoteDelimiterSink+str(df_file_source[irows,icolumns]).replace(quoteDelimiterSink,escapeDelimiterSink.rstrip()+quoteDelimiterSink).replace("\n"," ").replace("\r"," ")+quoteDelimiterSink)
+                  
+                    #elif str(df_file_source[irows,icolumns]).find(quoteDelimiterSink) > -1:
+                        #rowlist.append(quoteDelimiterSink+str(df_file_source[irows,icolumns]).replace(quoteDelimiterSink,escapeDelimiterSink.rstrip()+quoteDelimiterSink)+quoteDelimiterSink)
                     else:
-                        rowlist.append(str(df_file_source[irows,icolumns]))
+                        rowlist.append(str(df_file_source[irows,icolumns]).replace("\n"," ").replace("\r"," "))
                 else:
                     rowlist.append('')
                 row_sink = columnDelimiterSink.join(rowlist)
@@ -229,7 +273,7 @@ def get_SinkFileCSV(df_file_source,header_Sink,columnDelimiterSink,quoteDelimite
         return file_sink
 
     except Exception as e:
-     print(e)
+      print(e)
 
 # Imports
 from datetime import datetime
@@ -271,6 +315,8 @@ pathDate = str(datetime.today().year) + "/" + str(datetime.today().month).rjust(
 # str(datetime.today().day).rjust(2,"0")
 globalFileExists = True
 
+pathDate="2021/10/Test/"
+
 # DataLake
 serviceURI = "https://" + storageAccountName + ".dfs.core.windows.net/"
 
@@ -298,7 +344,7 @@ fileNameMetaSQL = ""
 currentFileNameMeta = ""
 metadataFound = "false"
 columnDelimiter = ","
-rowDelimiter = "\n\r"
+rowDelimiter = "\r\n"
 escapeDelimiter = "\ "
 quoteDelimiter = '"'
 addHeader = "0"
@@ -329,7 +375,7 @@ if check_directory_exists(containerNameSource,directoryNameSource)==True:
 
             # CSV Standards Sink setzen
             columnDelimiterSink = ","
-            rowDelimiterSink = "\n\r"
+            rowDelimiterSink = "\r\n"
             escapeDelimiterSink = "\ "
             quoteDelimiterSink = '"'
 
@@ -337,7 +383,7 @@ if check_directory_exists(containerNameSource,directoryNameSource)==True:
             currentFileNameMeta = ""
             metadataFound = "false"
             columnDelimiter = ","
-            rowDelimiter = "\n\r"
+            rowDelimiter = "\r\n"
             escapeDelimiter = "\ "
             quoteDelimiter = '"'
             addHeader = "0"
@@ -348,7 +394,7 @@ if check_directory_exists(containerNameSource,directoryNameSource)==True:
             # wenn Metadaten für aktuelles File vorhanden, CSV Standards überschreiben
                 for irows_meta in range(rows_meta):
                     currentFileNameMeta = df_meta[irows_meta,0]
-                    if currentFileNameMeta == fileNameSource:
+                    if currentFileNameMeta == fileNameSource or fileNameSource.startswith(currentFileNameMeta):
                         metadataFound = "true"
                         if df_meta[irows_meta,1] is not None:
                             columnDelimiter = df_meta[irows_meta,1]
@@ -403,6 +449,8 @@ if check_directory_exists(containerNameSource,directoryNameSource)==True:
 
             file_sink = get_SinkFileCSV(df_file_source,header_Sink,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink)
 
+            print(file_sink)
+
             # SinkFiles schreiben
             # Prüfung ob directory bereits vorhanden, wenn nicht dann erzeugen
 
@@ -411,13 +459,13 @@ if check_directory_exists(containerNameSource,directoryNameSource)==True:
                         
             # SinkCSV schreiben
 
-            returnstatus = upload_file_sink(containerNameSink,directoryNameSink,fileNameSink,file_sink,metadataDict)
-            print(returnstatus);
+            #returnstatus = upload_file_sink(containerNameSink,directoryNameSink,fileNameSink,file_sink,metadataDict)
+            #print(returnstatus);
 
             # Metadata schreiben
 
-            returnstatus = upload_file_sink(containerNameMeta,directoryNameMetaSink,fileNameMetaCSV,file_MetaCSV)
-            print(returnstatus);
+            #returnstatus = upload_file_sink(containerNameMeta,directoryNameMetaSink,fileNameMetaCSV,file_MetaCSV)
+            #print(returnstatus);
 
-            returnstatus = upload_file_sink(containerNameMeta,directoryNameMetaSink,fileNameMetaSQL,file_MetaSQL)
-            print(returnstatus);
+            #returnstatus = upload_file_sink(containerNameMeta,directoryNameMetaSink,fileNameMetaSQL,file_MetaSQL)
+            #print(returnstatus);

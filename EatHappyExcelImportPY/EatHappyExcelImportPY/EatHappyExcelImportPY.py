@@ -425,6 +425,32 @@ def readExcelVMarkt(file_client):
     
         return df_file_source 
 
+
+def readExcelEchternach(file_client):
+
+    with io.BytesIO() as f:
+        downloader = file_client.download_file()
+        b = downloader.readinto(f)
+
+        master_frame = pd.DataFrame(columns = ['Tag', 'Umsatz Brutto', 'Monat', 'Jahr', 'Datum'])
+
+        entry = pd.read_excel(f).fillna(-1)
+        jahr = entry.iloc[33,0]
+        for i in range(1,13):
+            month = entry.iloc[:31,[0,i]].copy()
+            month = month[month.iloc[:,1] >= 0]
+            month['Monat'] = i
+            month['Jahr'] = jahr
+            df = pd.concat([month['Jahr'],month['Monat'],month['Tag']], axis=1, keys=['Year', 'Month', 'Day'])
+            month['Datum'] = pd.to_datetime(df)
+            month.columns = master_frame.columns
+            master_frame = master_frame.append(month, ignore_index = True)
+
+            wb = master_frame.to_csv(index=False)
+            df_file_source = dt.fread(wb, fill=True)
+    
+        return df_file_source
+
 def get_SinkFileCSV(df_file_source,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink):
     try:
 
@@ -471,7 +497,7 @@ def get_SinkFileCSV(df_file_source,columnDelimiterSink,quoteDelimiterSink,escape
 fileShareAccountName = "archivedn3azqfsk6qoq"
 fileShareAccountKey = "3M9upkvW4TLtkyRCW7TgDTFKCi5AfsFidUdRyo9lf9XszBe9B+7jg2rW6p+SibjzLq9v3xurcPzzkq8qSdzNig=="
 shareName = "logicapps"
-directory = "VMarkt"
+directory = "Echternach"
 
 directory_path=directory+"/new"
 directory_path_sink=directory+"/archive"
@@ -479,6 +505,16 @@ directory_path_temporary=directory+"/temporary"
 connection_string = "DefaultEndpointsProtocol=https;AccountName={};AccountKey={};EndpointSuffix=core.windows.net".format(fileShareAccountName,fileShareAccountKey)
 parent_dir = ShareDirectoryClient.from_connection_string(conn_str=connection_string, share_name=shareName, directory_path=directory_path)
 my_files = list(parent_dir.list_directories_and_files())
+
+#parent_dir = ShareDirectoryClient.from_connection_string(conn_str=connection_string, share_name=shareName, directory_path="")
+#my_files = list(parent_dir.list_directories_and_files())
+
+#my_list = []
+
+#for directory in my_files:
+#    my_list.append(directory.name)
+
+#print(my_list)
 
 for file in my_files:
     fileName = file.name
@@ -599,8 +635,8 @@ for file in my_files:
         print(file_sink)
 
         # Transfer durchführen
-        transfer_result = doTransfer(file_client,file_client_sink,file_client_temporary,file_sink)
-        print(directory+": "+fileName+" "+transfer_result)
+        # transfer_result = doTransfer(file_client,file_client_sink,file_client_temporary,file_sink)
+        # print(directory+": "+fileName+" "+transfer_result)
 
 
     if directory == "Edeka_Suedbayern":
@@ -629,3 +665,16 @@ for file in my_files:
         transfer_result = doTransfer(file_client,file_client_sink,file_client_temporary,file_sink)
         print(directory+": "+fileName+" "+transfer_result)
 
+
+        
+    if directory == "Echternach":
+
+        df_file_source = readExcelEchternach(file_client)
+
+        # CSV erstellen
+        file_sink = get_SinkFileCSV(df_file_source,columnDelimiterSink,quoteDelimiterSink,escapeDelimiterSink)
+        print(file_sink)
+
+        # Transfer durchführen
+        transfer_result = doTransfer(file_client,file_client_sink,file_client_temporary,file_sink)
+        print(directory+": "+fileName+" "+transfer_result)  
